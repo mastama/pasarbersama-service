@@ -24,9 +24,9 @@ public class UsersController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByEmail(@RequestParam String email) {
+    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByEmail(@RequestParam String phoneNumber) {
         log.info("Incoming Getting user by email");
         log.info("Outgoing Getting user by email");
-        return usersService.getUserByEmail(email);
+        return usersService.getUserByPhoneNumber(phoneNumber);
     }
 }

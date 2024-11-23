@@ -66,35 +66,35 @@ public class UsersService {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByEmail(String email) {
-        log.info("Start get user by email");
+    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByPhoneNumber(String phoneNumber) {
+        log.info("Start get user by email or phone number");
         BaseResponse<RegisterResponse> response = new BaseResponse<>();
-
-        //check exist email
-        Users users = usersRepository.findByEmail(email);
-        if (users == null) {
+        Users user = usersRepository.findByPhoneNumber(phoneNumber);
+        //check by email or by phoneNumber
+        if (user == null) {
             response.setResponseStatus(false);
             response.setResponseDesc("User not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-
         try {
             //convert Users ke DTO registerResponse
             RegisterResponse registerResponse = new RegisterResponse();
-            registerResponse.setId(users.getId());
-            registerResponse.setName(users.getName());
-            registerResponse.setEmail(users.getEmail());
-            registerResponse.setPhoneNumber(users.getPhoneNumber());
+            registerResponse.setId(user.getId());
+            registerResponse.setName(user.getName());
+            registerResponse.setEmail(user.getEmail());
+            registerResponse.setPhoneNumber(user.getPhoneNumber());
 
             response.setResponseStatus(true);
             response.setResponseDesc("Get User registered successfully");
             response.setData(registerResponse);
+            log.info("Successfully fetched user");
         } catch (Exception e) {
             log.error("Error while getting user by email", e);
             response.setResponseStatus(false);
             response.setResponseDesc(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+        log.info("End get user by email or phone number");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
