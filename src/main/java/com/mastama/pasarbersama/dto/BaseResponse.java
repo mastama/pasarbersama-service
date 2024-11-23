@@ -3,8 +3,8 @@ package com.mastama.pasarbersama.dto;
 import lombok.Data;
 
 @Data
-public class BaseResponse {
+public class BaseResponse<T> {
     private Boolean responseStatus;
     private String responseDesc;
-    private Object data;
+    private T data;
 }
