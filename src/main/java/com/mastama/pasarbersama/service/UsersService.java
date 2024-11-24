@@ -1,17 +1,16 @@
 package com.mastama.pasarbersama.service;
 
 import com.mastama.pasarbersama.dto.BaseResponse;
-import com.mastama.pasarbersama.dto.response.RegisterResponse;
 import com.mastama.pasarbersama.entity.Users;
-import com.mastama.pasarbersama.entity.request.RegisterRequest;
 import com.mastama.pasarbersama.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -19,88 +18,66 @@ import java.util.Optional;
 public class UsersService {
     private final UsersRepository usersRepository;
 
-    public ResponseEntity<BaseResponse<RegisterResponse>> register(RegisterRequest request) {
-        log.info("Start register user");
-        BaseResponse<RegisterResponse> response = new BaseResponse<>();
+    /*
+    cannot to use because one account has one token match
+     */
+//    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByPhoneNumber(String phoneNumber) {
+//        log.info("Start get user by email or phone number");
+//        BaseResponse<RegisterResponse> response = new BaseResponse<>();
+//        try {
+//            Optional<Users> usersOptional = usersRepository.findByPhoneNumber(phoneNumber);
+//            //check by email or by phoneNumber
+//            if (usersOptional.isEmpty()) {
+//                response.setResponseStatus(false);
+//                response.setResponseDesc("User not found");
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+//            }
+//
+//            // Jika user ditemukan, ambil data dari Optional
+//            Users user = usersOptional.get();
+//
+//            //convert Users ke DTO registerResponse
+//            RegisterResponse registerResponse = new RegisterResponse();
+//            registerResponse.setId(user.getId());
+//            registerResponse.setName(user.getName());
+//            registerResponse.setEmail(user.getEmail());
+//            registerResponse.setPhoneNumber(user.getPhoneNumber());
+//
+//            response.setResponseStatus(true);
+//            response.setResponseDesc("Get User registered successfully");
+//            response.setData(registerResponse);
+//            log.info("Successfully fetched user");
+//        } catch (Exception e) {
+//            log.error("Error while getting user by email", e);
+//            response.setResponseStatus(false);
+//            response.setResponseDesc(e.getMessage());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+//        }
+//        log.info("End get user by email or phone number");
+//        return ResponseEntity.status(HttpStatus.OK).body(response);
+//    }
 
-        // check email exist or not
-        if (usersRepository.existsByEmail(request.getEmail())) {
-            response.setResponseStatus(false);
-            response.setResponseDesc("Email already exists");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        }
+    public ResponseEntity<BaseResponse<Users>> users() {
+        log.info("Start get user by token authorization");
+        BaseResponse<Users> response = new BaseResponse<>();
 
-        // check phoneNumber exist or not
-        if (usersRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            response.setResponseStatus(false);
-            response.setResponseDesc("Phone number already exists");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        }
+        // Ambil user details dari SecurityContext
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
 
-        try {
-            // create and save user
-            Users user = new Users();
-            user.setName(request.getName());
-            user.setEmail(request.getEmail());
-            user.setPhoneNumber(request.getPhoneNumber());
-            user.setPassword(request.getPassword());
+        // Ambil phoneNumber dari userDetails
+        String phoneNumber = userDetails.getUsername();
 
-            // save to db
-            Users savedUser = usersRepository.save(user);
+        // Cari user berdasarkan phone number
+        Users users = usersRepository.findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new UsernameNotFoundException("User with the phone number not found"));
 
-            // set response
-            RegisterResponse registerResponse = new RegisterResponse();
-            registerResponse.setId(savedUser.getId());
-            registerResponse.setName(savedUser.getName());
-            registerResponse.setEmail(savedUser.getEmail());
-            registerResponse.setPhoneNumber(savedUser.getPhoneNumber());
+        response.setResponseStatus(true);
+        response.setResponseDesc("User with the phone number " + users.getPhoneNumber());
+        response.setData(users);
 
-            response.setResponseStatus(true);
-            response.setResponseDesc("User registered successfully");
-            response.setData(registerResponse);
-        } catch (Exception e) {
-            log.error("Error while registering user", e);
-            response.setResponseStatus(false);
-            response.setResponseDesc(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-        log.info("End register user");
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    public ResponseEntity<BaseResponse<RegisterResponse>> getUserByPhoneNumber(String phoneNumber) {
-        log.info("Start get user by email or phone number");
-        BaseResponse<RegisterResponse> response = new BaseResponse<>();
-        try {
-            Optional<Users> usersOptional = usersRepository.findByPhoneNumber(phoneNumber);
-            //check by email or by phoneNumber
-            if (usersOptional.isEmpty()) {
-                response.setResponseStatus(false);
-                response.setResponseDesc("User not found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            // Jika user ditemukan, ambil data dari Optional
-            Users user = usersOptional.get();
-
-            //convert Users ke DTO registerResponse
-            RegisterResponse registerResponse = new RegisterResponse();
-            registerResponse.setId(user.getId());
-            registerResponse.setName(user.getName());
-            registerResponse.setEmail(user.getEmail());
-            registerResponse.setPhoneNumber(user.getPhoneNumber());
-
-            response.setResponseStatus(true);
-            response.setResponseDesc("Get User registered successfully");
-            response.setData(registerResponse);
-            log.info("Successfully fetched user");
-        } catch (Exception e) {
-            log.error("Error while getting user by email", e);
-            response.setResponseStatus(false);
-            response.setResponseDesc(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-        log.info("End get user by email or phone number");
+        log.info("End get user by token authorization");
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
