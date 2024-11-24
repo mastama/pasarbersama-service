@@ -1,7 +1,6 @@
 package com.mastama.pasarbersama.controller;
 
 import com.mastama.pasarbersama.dto.BaseResponse;
-import com.mastama.pasarbersama.dto.response.LoginResponse;
 import com.mastama.pasarbersama.dto.response.RegisterResponse;
 import com.mastama.pasarbersama.entity.request.LoginRequest;
 import com.mastama.pasarbersama.entity.request.RegisterRequest;
@@ -23,9 +22,9 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<BaseResponse<RegisterResponse>> register(@RequestBody RegisterRequest registerRequest) {
-        log.info("Incoming Register request: {}", registerRequest);
-        return authService.register(registerRequest);
+    public ResponseEntity<BaseResponse<RegisterResponse>> register(@RequestBody RegisterRequest request) {
+        log.info("Incoming Register request by phone number: {}", request.getPhoneNumber());
+        return authService.register(request);
     }
 
     @PostMapping("/login")

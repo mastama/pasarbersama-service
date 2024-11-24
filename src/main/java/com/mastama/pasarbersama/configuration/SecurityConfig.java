@@ -1,14 +1,14 @@
 package com.mastama.pasarbersama.configuration;
 
 import com.mastama.pasarbersama.component.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.ExceptionHandlingConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,18 +29,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(registry ->
-                        registry.requestMatchers(ALLOWED)
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
+                // Konfigurasi endpoint yang diperbolehkan tanpa autentikasi
+                .authorizeHttpRequests(registry -> registry
+                        .requestMatchers(ALLOWED) // `ALLOWED` adalah daftar endpoint bebas autentikasi
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
                 )
-                .sessionManagement(httpSecuritySessionManagementConfigurer ->
-                        httpSecuritySessionManagementConfigurer
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                // Konfigurasi session management (stateless karena menggunakan JWT)
+                .sessionManagement(sessionManagementConfigurer -> sessionManagementConfigurer
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                // Konfigurasi exception handling
+                .exceptionHandling(exceptionHandlingConfigurer -> exceptionHandlingConfigurer
+                        // Custom handler untuk akses yang tidak diotorisasi
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write(
+                                    "{\"error\":\"Unauthorized\",\"message\":\"Authentication required\"}"
+                            );
+                        })
+                        // Custom handler untuk akses yang dilarang (forbidden) || jika ada role user
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write(
+                                    "{\"error\":\"Forbidden\",\"message\":\"Access is denied\"}"
+                            );
+                        })
+                )
+                // Menambahkan filter JWT sebelum filter UsernamePasswordAuthentication
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 }

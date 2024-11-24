@@ -2,7 +2,6 @@ package com.mastama.pasarbersama.service;
 
 import com.mastama.pasarbersama.component.JwtUtils;
 import com.mastama.pasarbersama.dto.BaseResponse;
-import com.mastama.pasarbersama.dto.response.LoginResponse;
 import com.mastama.pasarbersama.dto.response.RegisterResponse;
 import com.mastama.pasarbersama.entity.Users;
 import com.mastama.pasarbersama.entity.request.LoginRequest;
@@ -68,7 +67,7 @@ public class AuthService {
             response.setResponseDesc("User registered successfully");
             response.setData(registerResponse);
         } catch (Exception e) {
-            log.error("Error while registering user", e);
+            log.error("Error while registering user: {}", e.getMessage());
             response.setResponseStatus(false);
             response.setResponseDesc(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
