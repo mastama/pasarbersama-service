@@ -59,16 +59,17 @@ public class ProductsController {
     BaseResponse getProductsName( @RequestParam(defaultValue = "1") Integer page,
                                   @RequestParam(defaultValue = "5") Integer size,
                                   @RequestParam(required = false) String q,
-                                  @RequestParam(required = false) Integer categoryId
+                                  @RequestParam(required = false) Integer categoryId,
+                                  @RequestParam(required = false) String sort
     ) {
 
         String key = (q == null ? "NQ" : "Q") + (categoryId == null ? "NC" : "C");
 
         PagingInfo<Products> productList = switch (key) {
-            case "QNC" -> productsService.getProductsByNameOrDesc(page, size, q);
-            case "NQC" -> productsService.getProductsByC(page, size, categoryId);
-            case "QC" -> productsService.getProductsByQOrDAndC(page, size, q, categoryId);
-            default -> productsService.getProducts(page, size);
+            case "QNC" -> productsService.getProductsByNameOrDesc(page, size, q, sort);
+            case "NQC" -> productsService.getProductsByC(page, size, categoryId, sort);
+            case "QC" -> productsService.getProductsByQOrDAndC(page, size, q, categoryId, sort);
+            default -> productsService.getProducts(page, size, sort);
         };
 
         BaseResponse baseResponse = new BaseResponse();

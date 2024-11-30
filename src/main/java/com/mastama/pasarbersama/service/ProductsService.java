@@ -2,11 +2,13 @@ package com.mastama.pasarbersama.service;
 
 import com.mastama.pasarbersama.entity.PagingInfo;
 import com.mastama.pasarbersama.entity.Products;
+import com.mastama.pasarbersama.entity.ProductsSort;
 import com.mastama.pasarbersama.repository.ProductsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -50,31 +52,59 @@ public class ProductsService {
         return PagingInfo.convertFromPage(products);
     }
 
-    public PagingInfo<Products> getProducts(int page, int size) {
+    public PagingInfo<Products> getProducts(int page, int size, String sort) {
         PageRequest pageRequest = PageRequest.of(page-1, size); //start from page 1
+
+        if (sort != null) {
+            pageRequest = pageRequest.withSort(mapStringToSort(sort));
+        }
+
         Page<Products> products = productsRepository.findAll(pageRequest);
 
         return PagingInfo.convertFromPage(products);
     }
 
-    public PagingInfo<Products> getProductsByNameOrDesc(int page, int size, String q) {
+    public PagingInfo<Products> getProductsByNameOrDesc(int page, int size, String q, String sort) {
         PageRequest pageRequest = PageRequest.of(page-1, size);
+
+        if (sort != null) {
+            pageRequest = pageRequest.withSort(mapStringToSort(sort));
+        }
+
         Page<Products> products = productsRepository.filterByNameOrDescription(q, pageRequest);
 
         return PagingInfo.convertFromPage(products);
     }
 
-    public PagingInfo<Products> getProductsByQOrDAndC(int page, int size, String q, Integer categoryId) {
+    public PagingInfo<Products> getProductsByQOrDAndC(int page, int size, String q, Integer categoryId, String sort) {
         PageRequest pageRequest = PageRequest.of(page-1, size);
+
+
+        if (sort != null) {
+            pageRequest = pageRequest.withSort(mapStringToSort(sort));
+        }
         Page<Products> products = productsRepository.filterByNameOrDescriptionAndCategory(q, categoryId, pageRequest);
 
         return PagingInfo.convertFromPage(products);
     }
 
-    public PagingInfo<Products> getProductsByC(int page, int size, Integer categoryId) {
+    public PagingInfo<Products> getProductsByC(int page, int size, Integer categoryId, String sort) {
         PageRequest pageRequest = PageRequest.of(page-1, size);
+
+        if (sort != null) {
+            pageRequest = pageRequest.withSort(mapStringToSort(sort));
+        }
+
         Page<Products> products = productsRepository.filterByCategory(categoryId, pageRequest);
 
         return PagingInfo.convertFromPage(products);
+    }
+
+    private Sort mapStringToSort(String value) {
+        ProductsSort productsSort = ProductsSort.fromValue(value);
+        return switch (productsSort) {
+            case PRICE_ASCENDING -> Sort.by("price").ascending();
+            case PRICE_DESCENDING -> Sort.by("price").descending();
+        };
     }
 }
